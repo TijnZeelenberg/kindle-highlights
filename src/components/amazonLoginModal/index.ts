@@ -34,11 +34,17 @@ export default class AmazonLoginModal {
     // system browser, ejecting the Amazon login flow. Drop that listener on the window we own.
     this.modal.webContents.removeAllListeners('will-navigate');
 
-    // We can only change title after page is loaded since HTML page has its own title
-    this.modal.once('ready-to-show', () => {
+    // We can only change title after page is loaded since HTML page has its own title.
+    // `ready-to-show` never fires for hidden windows on Linux/Wayland, so also show on load.
+    const showModal = (): void => {
+      if (this.modal.isDestroyed() || this.modal.isVisible()) {
+        return;
+      }
       this.modal.setTitle('Connect your Amazon account to Obsidian');
       this.modal.show();
-    });
+    };
+    this.modal.once('ready-to-show', showModal);
+    this.modal.webContents.once('did-finish-load', showModal);
 
     // If user is on the read.amazon.com url, we can safely assume they are logged in
     this.modal.webContents.on('did-navigate', (_event, url) => {

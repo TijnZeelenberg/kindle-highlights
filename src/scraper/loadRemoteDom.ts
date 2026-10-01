@@ -5,6 +5,8 @@ import { ee } from '~/eventEmitter';
 
 const { BrowserWindow: RemoteBrowserWindow } = remote;
 
+const LOAD_DEADLINE_MS = 45_000;
+
 type DomResult = {
   dom: Root;
   didNavigateUrl: string;
@@ -34,11 +36,37 @@ export const loadRemoteDom = async (
     show: false,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  window.loadURL(targetUrl);
+  // Rejections are handled by the deadline below; loadURL also rejects on harmless redirects
+  window.loadURL(targetUrl).catch(() => undefined);
 
-  return new Promise<DomResult>((resolveWrapper) => {
+  return new Promise<DomResult>((resolveWrapper, rejectWrapper) => {
     let didNavigateUrl: string = null;
+    let settled = false;
+
+    const finish = (error: Error | null, result?: DomResult): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(deadline);
+      if (!window.isDestroyed()) {
+        window.destroy();
+      }
+      if (error) {
+        rejectWrapper(error);
+      } else {
+        resolveWrapper(result);
+      }
+    };
+
+    // Amazon pages sometimes re-navigate mid-load, after which did-finish-load or
+    // executeJavaScript never settles; without a deadline the whole sync hangs
+    const deadline = setTimeout(() => {
+      if (shouldLog) {
+        ee.emit('syncLog', `${labelPrefix}Timed out loading ${targetUrl}`);
+      }
+      finish(new Error(`Timed out loading ${targetUrl}`));
+    }, timeout + LOAD_DEADLINE_MS);
 
     window.webContents.on('did-navigate', (_event, url) => {
       didNavigateUrl = url;
@@ -50,11 +78,10 @@ export const loadRemoteDom = async (
       }
     });
 
-    window.webContents.on('did-finish-load', () => {
+    window.webContents.once('did-finish-load', () => {
       if (shouldLog) {
         ee.emit('syncLog', `${labelPrefix}Page loaded`);
       }
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       Promise.resolve()
         .then(() => {
           if (timeout > 0) {
@@ -70,30 +97,35 @@ export const loadRemoteDom = async (
           }
         })
         .then(() => {
+          if (settled) {
+            return null;
+          }
           if (shouldLog) {
             ee.emit('syncLog', `${labelPrefix}Extracting page content…`);
           }
           return window.webContents.executeJavaScript(
             `document.querySelector('body').innerHTML`
-          );
+          ) as Promise<string>;
         })
         .then((html) => {
+          if (settled) {
+            return;
+          }
           if (shouldLog) {
             ee.emit('syncLog', `${labelPrefix}Parsing HTML…`);
           }
           const $ = cheerio.load(html);
 
-          window.destroy();
-
           if (shouldLog) {
             ee.emit('syncLog', `${labelPrefix}Page ready`);
           }
 
-          resolveWrapper({
+          finish(null, {
             dom: $,
             didNavigateUrl: didNavigateUrl,
           });
-        });
+        })
+        .catch((error: Error) => finish(error));
     });
   });
 };
