@@ -7,18 +7,18 @@ Working conventions and decisions for AI-assisted development on this repo.
 ## Project Overview
 
 - **What**: Obsidian plugin for syncing Kindle highlights/notes into an Obsidian vault
-- **Tech**: TypeScript, Rollup bundler, Obsidian Plugin API
+- **Tech**: TypeScript, esbuild bundler, Obsidian Plugin API
 - **Stars**: 1,200+ | **Forks**: 86 | **Status**: Revived (Feb 2026 after ~3 year hiatus)
 - **Owner**: hadynz (GitHub SSH) — note: `gh` CLI may be authenticated as a different account
 
 ## Quick Reference
 
-| Command         | Expected               |
-| --------------- | ---------------------- |
-| `npm run lint`  | 0 errors (warnings OK) |
-| `npm run test`  | All pass (127+ tests)  |
-| `npm run build` | `dist/main.js` (~1MB)  |
-| Node version    | 20.x only              |
+| Command         | Expected                |
+| --------------- | ----------------------- |
+| `npm run lint`  | 0 errors (warnings OK)  |
+| `npm run test`  | All pass (127+ tests)   |
+| `npm run build` | `dist/main.js` (~750KB) |
+| Node version    | 20.x only               |
 
 ## Documentation
 

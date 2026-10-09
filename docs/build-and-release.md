@@ -2,13 +2,13 @@
 
 ## Build & Test
 
-| Command                | Purpose        | Expected                                                 |
-| ---------------------- | -------------- | -------------------------------------------------------- |
-| `npm install`          | Install deps   | Clean (some deprecation warnings OK)                     |
-| `npm run lint`         | ESLint         | 0 errors required. Warnings acceptable (32 as of v2.0.0) |
-| `npm run test`         | Jest tests     | All pass (112 tests, 12 suites as of v2.0.0)             |
-| `npm run test-verbose` | Jest verbose   | Same as above with detail                                |
-| `npm run build`        | Rollup → dist/ | Produces `dist/main.js` (~1MB) and `dist/manifest.json`  |
+| Command                | Purpose         | Expected                                                  |
+| ---------------------- | --------------- | --------------------------------------------------------- |
+| `npm install`          | Install deps    | Clean (some deprecation warnings OK)                      |
+| `npm run lint`         | ESLint          | 0 errors required. Warnings acceptable (32 as of v2.0.0)  |
+| `npm run test`         | Jest tests      | All pass (112 tests, 12 suites as of v2.0.0)              |
+| `npm run test-verbose` | Jest verbose    | Same as above with detail                                 |
+| `npm run build`        | esbuild → dist/ | Produces `dist/main.js` (~750KB) and `dist/manifest.json` |
 
 - **Pre-commit hooks**: lint-staged runs on staged files. Will reject commits with lint errors. Never bypass with `--no-verify`.
 - **Node version**: 20.x (local and CI). Older Node versions (15, 19) break with modern deps.
