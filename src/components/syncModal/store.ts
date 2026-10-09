@@ -120,6 +120,9 @@ const createSyncModalStore = () => {
 
   ee.on('loginComplete', (success: boolean) => {
     addRootLog(success ? 'Login successful' : 'Login cancelled');
+    if (!success) {
+      syncing('idle');
+    }
   });
 
   ee.on('fetchingBooks', () => {

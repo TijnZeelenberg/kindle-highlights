@@ -4,7 +4,7 @@ import { get } from 'svelte/store';
 import kindleIcon from '~/assets/kindleIcon.svg';
 import { ConfirmDeleteModal } from '~/components/confirmDeleteModal';
 import SyncModal from '~/components/syncModal';
-import { store as syncModalStore } from '~/components/syncModal/store';
+import { store as syncModalStore, type SyncModalState } from '~/components/syncModal/store';
 import { ee } from '~/eventEmitter';
 import FileManager from '~/fileManager';
 import { registerNotifications } from '~/notifications';
@@ -20,6 +20,13 @@ const SYNC_STATUS_MESSAGES: Record<string, string> = {
   'sync:syncing': 'Kindle: Syncing…',
   'sync:cancelling': 'Kindle: Cancelling…',
 };
+
+const ACTIVE_SYNC_STATUSES: SyncModalState['status'][] = [
+  'sync:login',
+  'sync:fetching-books',
+  'sync:syncing',
+  'sync:cancelling',
+];
 
 export default class KindlePlugin extends Plugin {
   private fileManager!: FileManager;
@@ -51,7 +58,7 @@ export default class KindlePlugin extends Plugin {
     });
 
     this.storeUnsubscribe = syncModalStore.subscribe((state) => {
-      const isSyncing = state.status.startsWith('sync:');
+      const isSyncing = ACTIVE_SYNC_STATUSES.includes(state.status);
       const statusMessage = SYNC_STATUS_MESSAGES[state.status];
 
       if (isSyncing && state.status === 'sync:syncing' && state.currentJob) {
